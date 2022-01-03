@@ -1,0 +1,136 @@
+import speech_recognition as sr
+import os
+from playsound import playsound
+import webbrowser
+import random
+import wikipedia
+import pyttsx3
+import datetime
+import smtplib
+
+def speak(audio):
+    engine.say(audio)
+    engine.runAndWait()
+
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+# print(voices[1].id)
+engine.setProperty('voice', voices[0].id)
+
+greeting_dict = {'hello':'hello','hi':'hi'}
+mp3_greeting_list = ['mp3/friday/greetings accept 1.mp3','mp3/friday/greetings accept 2.mp3']
+
+def play_sound(mp3_list):
+    mp3 = random.choice(mp3_list)
+    playsound(mp3)
+
+
+def takeCommand():
+    #It takes microphone input from the user and returns string output
+
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        r.pause_threshold = 1
+        audio = r.listen(source=source,timeout=0,phrase_time_limit=5)
+
+    try:
+        print("Recognizing...")
+        query = r.recognize_google(audio, language='en-in')
+        print(f"User said: {query}\n")
+
+    except Exception as e:
+        # print(e)
+        print("Say that again please...")
+        return "None"
+
+    except sr.WaitTimeoutError as o:
+        print('Network error try that again!')
+
+    return query
+
+def sendEmail(to, content):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.ehlo()
+    server.starttls()
+    server.login('7145s@sbdav.co.in', 'sachit2886')
+    server.sendmail('7145s@sbdav.co.in', to, content)
+    server.close()
+
+def is_valid_note(greet_dict, voice_note):
+    for key, value in greet_dict.items():
+        # 'Hello Friday'
+        try:
+            if value == voice_note.split(' ')[0]:
+                return True
+
+            elif key == voice_note.split(' ')[1]:
+                return True
+
+        except IndexError:
+            pass
+
+    return False
+
+
+
+if __name__ == "__main__":
+
+    playsound('mp3/friday/greeting.mp3')
+
+    while True:
+    # if 1:
+        query = takeCommand().lower()
+
+        # Logic for executing tasks based on query
+        if 'wikipedia' in query:
+            speak('Searching Wikipedia...')
+            query = query.replace("wikipedia", "")
+            results = wikipedia.summary(query, sentences=5)
+            speak("According to Wikipedia")
+            print(results)
+            speak(results)
+
+        elif 'open youtube' in query:
+            webbrowser.open("https://www.youtube.com/")
+
+
+        elif 'open google' in query:
+            webbrowser.open('https://www.google.com')
+
+        elif 'open stackoverflow' in query:
+            webbrowser.open("https://stackoverflow.com/")
+
+        elif 'play songs' in query:
+            music_dir = 'D:/music'
+            songs = os.listdir(music_dir)
+            print(songs)
+            os.startfile(os.path.join(music_dir, songs[0]))
+
+        elif 'the time' in query:
+            strTime = datetime.datetime.now().strftime("%H:%M:%S")
+            speak(f"Sir, the time is {strTime}")
+
+        elif 'email' in query:
+            try:
+                speak("What should I say?")
+                content = takeCommand()
+                to = "jimmyandreson72@gmail.com"
+                sendEmail(to, content)
+                speak("Email has been sent!")
+            except Exception as e:
+                print(e)
+                speak("Sorry Sir. I am not able to send this email")
+
+        if is_valid_note(greeting_dict, query):
+            print('In greeting...')
+            play_sound(mp3_greeting_list)
+            continue
+
+        elif 'open' in query:
+            os.system('explorer C:// {}'.format(query.replace('Open','')))
+            continue
+
+        elif 'bye' in query:
+            speak("Bye sir its my pleasure to help you , bye and have a nice day sir!")
+            exit()
